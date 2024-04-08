@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AboutUs() {
   const details = [
     { id: 1, name: "Yash", role: "Senior Developer" },
@@ -7,22 +9,15 @@ export default function AboutUs() {
 
   const list = details.map((element, index) => {
     return (
-      <tr key={index}>
-        <td>{element.name}</td>
-        <td>{element.role}</td>
-      </tr>
+      <Link key={index} href={`/aboutus/${element.id}`}>
+        <li>
+          <h3>
+            {element.name} - {element.role}
+          </h3>
+        </li>
+      </Link>
     );
   });
 
-  return (
-    <table className="table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Role</th>
-        </tr>
-      </thead>
-      <tbody>{list}</tbody>
-    </table>
-  );
+  return <ul>{list}</ul>;
 }
