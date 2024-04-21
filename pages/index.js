@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import MeetupList from "../components/meetups/MeetupList";
 
 const dummy_list = [
@@ -17,12 +18,20 @@ const dummy_list = [
   },
 ];
 
-const HomePage = () => {
-  return (
-    <>
-      <MeetupList meetups={dummy_list} />
-    </>
-  );
+const HomePage = (props) => {
+  return <MeetupList meetups={props.meetups} />;
 };
+
+// getStaticProps executes in the build time. if we set a revalidate, it will be executed in
+// the frequency of the set time also.
+
+export async function getStaticProps() {
+  // fetch api
+  return {
+    props: { meetups: dummy_list },
+    revalidate : 10 // re-evaluate the getStaticProps in every 10 seconds.
+  };
+
+}
 
 export default HomePage;
