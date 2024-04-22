@@ -1,34 +1,79 @@
+import { addRequestMeta } from "next/dist/server/request-meta";
 import MeetupDetail from "../../components/meetups/MeetupDetail";
+import { MongoClient, ObjectId } from "mongodb";
 
 function MeetupDetails(props) {
   return <MeetupDetail meetupData={props.meetupData} />;
 }
 
 export async function getStaticPaths() {
+  const client = await MongoClient.connect(
+    `mongodb+srv://ramsankaraloor:${process.env.MONGODB_PASSWORD}@cluster0.xggjwq1.mongodb.net/meetups`
+  );
+
+  const db = client.db();
+  const meetupsCollection = db.collection("meetups");
+  const meetups = await meetupsCollection.find({}, { _id: 1 }).toArray();
+  client.close();
+
+  const paths = meetups.map((meetup) => ({
+    params: { meetupId: meetup._id.toString() },
+  }));
+
   return {
-    paths: [
-      { params: { meetupId: "1" } }, // Example: pre-defined meetupId
-      { params: { meetupId: "2" } }, // Example: pre-defined meetupId
-      // Add more paths as needed
-    ],
-    fallback: false, // or 'blocking' if you want to enable incremental static generation
+    paths,
+    fallback: false,
   };
 }
 
 export async function getStaticProps(context) {
   const meetupId = context.params.meetupId;
 
-  return {
-    props: {
-      meetupData: {
-        id: meetupId,
-        image:
-          "https://www.nps.gov/common/uploads/places/images/nri/20131126/siteadmin/D2F5EA00-C5B7-F538-0D33DD9DB13B2BBF/D2F5EA00-C5B7-F538-0D33DD9DB13B2BBF.jpg",
-        title: "Capitol",
-        address: "Washington DC, USA",
+  console.log("Received meetupId:", meetupId);
+
+  let client;
+  try {
+    client = await MongoClient.connect(
+      `mongodb+srv://ramsankaraloor:${process.env.MONGODB_PASSWORD}@cluster0.xggjwq1.mongodb.net/meetups`
+    );
+
+    const db = client.db();
+    const meetupsCollection = db.collection("meetups");
+
+    console.log("Attempting to find meetup with ID:", meetupId);
+    const singleMeetup = await meetupsCollection.findOne({
+      _id: new ObjectId(meetupId),
+    });
+
+    console.log("Found meetup:", singleMeetup);
+
+    if (!singleMeetup) {
+      return {
+        notFound: true,
+      };
+    }
+
+    return {
+      props: {
+        meetupData: {
+          id: singleMeetup._id.toString(),
+          title: singleMeetup.title,
+          image: singleMeetup.image,
+          description: singleMeetup.description,
+          address: singleMeetup.address,
+        },
       },
-    },
-  };
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      notFound: true,
+    };
+  } finally {
+    if (client) {
+      client.close();
+    }
+  }
 }
 
 export default MeetupDetails;

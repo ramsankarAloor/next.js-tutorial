@@ -10,6 +10,7 @@ function MeetupDetail(props) {
       <div className={classes.content}>
         <h3>{props.meetupData.title}</h3>
         <address>{props.meetupData.address}</address>
+        <p>{props.meetupData.description}</p>
       </div>
     </Card>
   );
